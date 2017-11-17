@@ -448,6 +448,11 @@ func (n *NGINXController) OnUpdate(ingressCfg ingress.Configuration) error {
 	cfg := ngx_template.ReadConfig(n.configmap.Data)
 	cfg.Resolver = n.resolver
 
+	backendMap := make(map[string]*ingress.Backend)
+	for _, backend := range ingressCfg.Backends {
+		backendMap[backend.Name] = backend
+	}
+
 	servers := []*TCPServer{}
 	for _, pb := range ingressCfg.PassthroughBackends {
 		svc := pb.Service
@@ -478,6 +483,7 @@ func (n *NGINXController) OnUpdate(ingressCfg ingress.Configuration) error {
 			IP:            svc.Spec.ClusterIP,
 			Port:          port,
 			ProxyProtocol: false,
+			Endpoints:     backendMap[pb.Backend].Endpoints,
 		})
 	}
 

@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"math/rand"
+	"strconv"
 
 	"github.com/golang/glog"
 
@@ -31,6 +33,7 @@ type TCPServer struct {
 	IP            string
 	Port          int
 	ProxyProtocol bool
+	Endpoints     []ingress.Endpoint
 }
 
 type TCPProxy struct {
@@ -72,6 +75,26 @@ func (p *TCPProxy) Handle(conn net.Conn) {
 	if proxy == nil {
 		glog.V(4).Infof("there is no configured proxy for SSL connections")
 		return
+	}
+
+
+	// for headless services, pick an Endpoint to use
+	if proxy.IP == "None" {
+		if proxy.Endpoints == nil || len(proxy.Endpoints) == 0 {
+			glog.V(4).Infof("no endpoints found for hostname: %s", hostname)
+			return
+		}
+		// pick a random endpoint
+		// TODO better load balancing algorithm
+		endpointIndex := rand.Intn(len(proxy.Endpoints))
+		endpoint := proxy.Endpoints[endpointIndex]
+
+        proxy.IP = endpoint.Address
+        proxy.Port, err = strconv.Atoi(endpoint.Port)
+        if err != nil {
+			glog.V(4).Infof("Invalid endpoint port %S for hostname: %s", endpoint.Port, hostname)
+			return
+		}
 	}
 
 	clientConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", proxy.IP, proxy.Port))
