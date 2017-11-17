@@ -477,13 +477,17 @@ func (n *NGINXController) OnUpdate(ingressCfg ingress.Configuration) error {
 			}
 		}
 
+		endpoints := backendMap[pb.Backend].Endpoints
+
+		glog.V(4).Infof("resolved backend %v to endpoints %v", pb.Backend, endpoints)
+
 		//TODO: Allow PassthroughBackends to specify they support proxy-protocol
 		servers = append(servers, &TCPServer{
 			Hostname:      pb.Hostname,
 			IP:            svc.Spec.ClusterIP,
 			Port:          port,
 			ProxyProtocol: false,
-			Endpoints:     backendMap[pb.Backend].Endpoints,
+			Endpoints:     endpoints,
 		})
 	}
 
