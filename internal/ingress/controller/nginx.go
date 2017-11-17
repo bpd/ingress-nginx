@@ -448,6 +448,15 @@ func (n *NGINXController) OnUpdate(ingressCfg ingress.Configuration) error {
 	cfg := ngx_template.ReadConfig(n.configmap.Data)
 	cfg.Resolver = n.resolver
 
+	glog.V(4).Infof("building backend map")
+
+	backendMap := make(map[string]*ingress.Backend)
+	for _, backend := range ingressCfg.Backends {
+		backendMap[backend.Name] = backend
+
+		glog.V(4).Infof("backend %v => %v", backend.Name, backend)
+	}
+
 	servers := []*TCPServer{}
 	for _, pb := range ingressCfg.PassthroughBackends {
 		svc := pb.Service
@@ -472,12 +481,17 @@ func (n *NGINXController) OnUpdate(ingressCfg ingress.Configuration) error {
 			}
 		}
 
+		endpoints := backendMap[pb.Backend].Endpoints
+
+		glog.V(4).Infof("resolved backend %v to endpoints %v", pb.Backend, endpoints)
+
 		//TODO: Allow PassthroughBackends to specify they support proxy-protocol
 		servers = append(servers, &TCPServer{
 			Hostname:      pb.Hostname,
 			IP:            svc.Spec.ClusterIP,
 			Port:          port,
 			ProxyProtocol: false,
+			Endpoints:     endpoints,
 		})
 	}
 
