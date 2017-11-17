@@ -448,9 +448,13 @@ func (n *NGINXController) OnUpdate(ingressCfg ingress.Configuration) error {
 	cfg := ngx_template.ReadConfig(n.configmap.Data)
 	cfg.Resolver = n.resolver
 
+	glog.V(4).Infof("building backend map")
+
 	backendMap := make(map[string]*ingress.Backend)
 	for _, backend := range ingressCfg.Backends {
 		backendMap[backend.Name] = backend
+
+		glog.V(4).Infof("backend %v => %v", backend.Name, backend)
 	}
 
 	servers := []*TCPServer{}
