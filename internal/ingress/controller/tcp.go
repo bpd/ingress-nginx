@@ -26,6 +26,7 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/paultag/sniff/parser"
+	"k8s.io/ingress-nginx/internal/ingress"
 )
 
 type TCPServer struct {
@@ -96,6 +97,8 @@ func (p *TCPProxy) Handle(conn net.Conn) {
 			return
 		}
 	}
+
+	glog.V(4).Infof("proxying to backend: %v", proxy)
 
 	clientConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", proxy.IP, proxy.Port))
 	if err != nil {
