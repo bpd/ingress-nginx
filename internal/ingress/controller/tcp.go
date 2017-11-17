@@ -19,8 +19,8 @@ package controller
 import (
 	"fmt"
 	"io"
-	"net"
 	"math/rand"
+	"net"
 	"strconv"
 
 	"github.com/golang/glog"
@@ -78,7 +78,6 @@ func (p *TCPProxy) Handle(conn net.Conn) {
 		return
 	}
 
-
 	// for headless services, pick an Endpoint to use
 	if proxy.IP == "None" {
 		if proxy.Endpoints == nil || len(proxy.Endpoints) == 0 {
@@ -90,9 +89,9 @@ func (p *TCPProxy) Handle(conn net.Conn) {
 		endpointIndex := rand.Intn(len(proxy.Endpoints))
 		endpoint := proxy.Endpoints[endpointIndex]
 
-        proxy.IP = endpoint.Address
-        proxy.Port, err = strconv.Atoi(endpoint.Port)
-        if err != nil {
+		proxy.IP = endpoint.Address
+		proxy.Port, err = strconv.Atoi(endpoint.Port)
+		if err != nil {
 			glog.V(4).Infof("Invalid endpoint port %S for hostname: %s", endpoint.Port, hostname)
 			return
 		}
