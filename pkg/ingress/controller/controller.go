@@ -234,6 +234,9 @@ func (ic GenericController) GetService(name string) (*apiv1.Service, error) {
 // then sends the content to the backend (OnUpdate) receiving the populated
 // template as response reloading the backend if is required.
 func (ic *GenericController) syncIngress(item interface{}) error {
+
+	syncStart := time.Now()
+
 	ic.syncRateLimiter.Accept()
 
 	if ic.syncQueue.IsShuttingDown() {
@@ -300,11 +303,11 @@ func (ic *GenericController) syncIngress(item interface{}) error {
 	}
 
 	if !ic.isForceReload() && ic.runningConfig != nil && ic.runningConfig.Equal(&pcfg) {
-		glog.V(3).Infof("skipping backend reload (no changes detected)")
+		glog.V(3).Infof("skipping backend reload (no changes detected - took %s)", time.Since(syncStart))
 		return nil
 	}
 
-	glog.Infof("backend reload required")
+	glog.Infof("backend reload required - building config took %s", time.Since(syncStart))
 
 	err := ic.cfg.Backend.OnUpdate(pcfg)
 	if err != nil {
@@ -313,7 +316,7 @@ func (ic *GenericController) syncIngress(item interface{}) error {
 		return err
 	}
 
-	glog.Infof("ingress backend successfully reloaded...")
+	glog.Infof("ingress backend successfully reloaded - took %s...", time.Since(syncStart))
 	incReloadCount()
 	setSSLExpireTime(servers)
 
